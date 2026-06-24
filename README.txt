@@ -14,9 +14,10 @@ all together.
 
 FIRST RUN
 ---------
-The very first time you use it, it downloads a small helper program
-(ffmpeg, about 30 MB) into a "tools" folder next to this file.
-That happens once - after that it's instant and works offline.
+The very first time you use it, it downloads a helper program
+(ffmpeg, about 90 MB) into a "tools" folder next to this file.
+That happens once and can take a minute or two - after that it's
+instant and works offline. It never downloads again.
 
 So the first run needs an internet connection.
 

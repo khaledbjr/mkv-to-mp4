@@ -29,9 +29,10 @@ You can drop a whole batch of files at once.
 
 ## First run
 
-The first time you use it, the app downloads a portable copy of ffmpeg (~30 MB)
+The first time you use it, the app downloads a portable copy of ffmpeg (~90 MB)
 into a `tools/` folder next to the scripts. This happens once and requires an
-internet connection. After that it works offline and instantly.
+internet connection — give it a minute or two. After that it works offline and
+instantly; it never downloads again.
 
 > **Windows SmartScreen** may show *"Windows protected your PC"* the first time.
 > Click **More info → Run anyway**. This is normal for unsigned scripts.

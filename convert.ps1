@@ -30,13 +30,26 @@ function Get-Ffmpeg {
     if ($onPath) { return $onPath.Source }
 
     # 3. Download a portable build.
-    Write-Step "ffmpeg not found - downloading a portable copy (one time only, ~30 MB)"
+    Write-Step "ffmpeg not found - downloading a portable copy (one time only, ~90 MB)"
+    Write-Ok "Please wait, this can take a minute or two depending on your connection..."
     $url = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
     $zip = Join-Path $env:TEMP ('ffmpeg-' + [guid]::NewGuid().ToString('N') + '.zip')
     $tmp = Join-Path $env:TEMP ('ffmpeg-extract-' + [guid]::NewGuid().ToString('N'))
 
     try {
-        Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+        # Use WebClient and silence the progress bar. Windows PowerShell's
+        # Invoke-WebRequest progress rendering throttles downloads to a crawl
+        # (a long-standing bug); this is dramatically faster.
+        $prevProgress = $ProgressPreference
+        $ProgressPreference = 'SilentlyContinue'
+        try {
+            (New-Object Net.WebClient).DownloadFile($url, $zip)
+        } catch {
+            # Fall back to Invoke-WebRequest if WebClient is blocked.
+            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+        } finally {
+            $ProgressPreference = $prevProgress
+        }
         Write-Ok "Downloaded. Unpacking..."
         Expand-Archive -Path $zip -DestinationPath $tmp -Force
 
