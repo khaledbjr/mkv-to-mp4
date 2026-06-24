@@ -77,7 +77,7 @@ function Get-OutputPath($mkvPath) {
     $name = [IO.Path]::GetFileNameWithoutExtension($mkvPath)
     $out  = Join-Path $dir ($name + '.mp4')
     $i = 1
-    while (Test-Path $out) {
+    while (Test-Path -LiteralPath $out) {
         $out = Join-Path $dir ($name + " ($i).mp4")
         $i++
     }
@@ -106,7 +106,7 @@ function Convert-One($ffmpeg, $mkvPath) {
     }
 
     Write-Warn2 "Fast remux didn't work for this file (unusual codec). Re-encoding instead - this is slower..."
-    Remove-Item $out -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $out -ErrorAction SilentlyContinue
 
     # Fallback: full re-encode to H.264 + AAC. Works for almost anything.
     $reArgs = @(
@@ -125,7 +125,7 @@ function Convert-One($ffmpeg, $mkvPath) {
     }
 
     Write-Err ("FAILED: " + (Split-Path -Leaf $mkvPath))
-    Remove-Item $out -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $out -ErrorAction SilentlyContinue
     return $false
 }
 
@@ -140,15 +140,32 @@ try {
     exit 1
 }
 
-$files = @($args | Where-Object { $_ })
-$mkvs  = @($files | Where-Object { (Test-Path $_) -and ([IO.Path]::GetExtension($_) -ieq '.mkv') })
-$skipped = @($files | Where-Object { [IO.Path]::GetExtension($_) -ine '.mkv' })
+# Sort the dropped paths. Use -LiteralPath so filenames containing [ ] (which
+# PowerShell would otherwise treat as wildcards) are handled correctly.
+$files   = @($args | Where-Object { $_ })
+$mkvs    = @()
+$skipped = @()
+$missing = @()
+foreach ($f in $files) {
+    if ([IO.Path]::GetExtension($f) -ine '.mkv') { $skipped += $f; continue }
+    if (-not (Test-Path -LiteralPath $f))        { $missing += $f; continue }
+    $mkvs += $f
+}
 
 if ($skipped.Count -gt 0) {
-    Write-Warn2 ("Skipping " + $skipped.Count + " non-MKV file(s).")
+    Write-Warn2 ("Skipping " + $skipped.Count + " file(s) that are not .mkv.")
+}
+foreach ($m in $missing) {
+    Write-Err ("Could not find this file: " + $m)
 }
 if ($mkvs.Count -eq 0) {
-    Write-Err "No .mkv files were given. Drag MKV files onto the icon and try again."
+    Write-Err "No usable .mkv files were given."
+    if ($files.Count -gt 0) {
+        Write-Warn2 "Here is exactly what was dropped onto the icon:"
+        foreach ($f in $files) { Write-Host ("    " + $f) -ForegroundColor Gray }
+    } else {
+        Write-Warn2 "Nothing was received. Drag MKV files directly onto the .bat icon (not into this window)."
+    }
     exit 1
 }
 
