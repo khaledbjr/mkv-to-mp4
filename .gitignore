@@ -1,0 +1,11 @@
+# Auto-downloaded portable ffmpeg (fetched on first run; ~30 MB binaries)
+tools/
+
+# Generated video output
+*.mp4
+*.mkv
+
+# OS / editor cruft
+Thumbs.db
+desktop.ini
+.DS_Store
